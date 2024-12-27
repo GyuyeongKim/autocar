@@ -1,0 +1,35 @@
+import urllib.request
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# (1) 테스트용 이미지 가져오기 (URL)
+url = "https://github.com/GyuyeongKim/autocar/blob/main/people.jpeg?raw=True"
+req = urllib.request.urlopen(url)
+arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
+img = cv2.imdecode(arr, cv2.IMREAD_COLOR)  # BGR 형식
+
+# (2) HOG + SVM 설정
+hog = cv2.HOGDescriptor()
+hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+
+# (3) 보행자 검출
+#    winStride, padding, scale 파라미터는 상황에 맞게 튜닝 가능
+found, weights = hog.detectMultiScale(
+    img,
+    winStride=(8, 8),
+    padding=(8, 8),
+    scale=1.05
+)
+
+# (4) 검출된 영역 사각형 표시
+for (x, y, w, h) in found:
+    cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 8)
+
+# (5) 시각화 (BGR→RGB 변환)
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+plt.figure(figsize=(8, 8))
+plt.imshow(img_rgb)
+plt.axis("off")
+plt.title(f"Detected pedestrians: {len(found)}")
+plt.show()
